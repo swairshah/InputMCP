@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { launchInputPrompt } from "./create.ts";
+import { launchInputPrompt, InputSpec, TextInputSpec, ImageInputSpec } from "./create.ts";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
@@ -12,23 +12,77 @@ const server = new McpServer({
     },
 })
 
-function launchWrapper() : Promise<string> {
-    return launchInputPrompt({ message: "Enter your input:", placeholder: "Type something here..." })
-        .then((result) => {
-            if (result.action === "submit") {
-                return result.value;
-            } else {
-                throw new Error("User cancelled the input");
-            }
-        });
+type InputKind = "text" | "image";
+
+function normalizeSpec(kind: InputKind | undefined): InputSpec {
+    const resolved = kind ?? "text";
+
+    if (resolved === "image") {
+        const imageOptions: ImageInputSpec = {
+            kind: "image",
+            message: "Draw your input:",
+            width: 512,
+            height: 512,
+            mimeType: "image/png",
+            submitLabel: "Send"
+        };
+        return imageOptions;
+    }
+
+    const textOptions: TextInputSpec = {
+        kind: "text",
+        message: "Enter your input:",
+        placeholder: "Type something here...",
+        submitLabel: "Send",
+        lines: 1,
+        format: "text"
+    };
+
+    return textOptions;
+}
+
+function extractImageContent(dataUrl: string, fallbackMime: string): { mimeType: string; data: string } {
+    const match = dataUrl.match(/^data:(.+);base64,(.+)$/);
+    if (!match) {
+        throw new Error("Invalid image data returned from input UI");
+    }
+
+    const [, mimeType, base64Data] = match;
+    const cleanData = base64Data.replace(/\s+/g, "");
+
+    return {
+        mimeType: mimeType || fallbackMime,
+        data: cleanData
+    };
 }
 
 server.registerTool("collect_input", {
     title: "Collect Input",
-    description: "get a fancy input from user",
-}, async () => {
-    const result = await launchWrapper();
-    return { content: [{ type: "text", text: result }] };
+    description: "get image or text input from user. This is used to get contextual input from the user of different kinds. ",
+    inputSchema: { kind: z.enum(["text", "image"]).optional() },
+}, async ({ kind }) => {
+    const spec = normalizeSpec(kind);
+
+    const result = await launchInputPrompt({ spec });
+
+    if (result.action === "submit") {
+        if (result.result.kind === "text") {
+            return { content: [{ type: "text", text: result.result.value }] };
+        }
+
+        if (result.result.kind === "image") {
+            const { mimeType, data } = extractImageContent(result.result.dataUrl, result.result.mimeType);
+            return { content: [{ type: "image", mimeType, data }] };
+        }
+
+        throw new Error(`Unsupported input result kind: ${(result.result as { kind?: string } | undefined)?.kind ?? "unknown"}`);
+    }
+
+    if (result.action === "cancel") {
+        throw new Error("User cancelled the input");
+    }
+
+    throw new Error(result.message);
 });
 
 // Start MCP server over stdio when invoked directly
@@ -37,4 +91,3 @@ server.connect(transport).catch((error) => {
     console.error("Server error:", error);
     process.exit(1);
 });
-

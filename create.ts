@@ -8,8 +8,44 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const electronEntrypoint = resolve(__dirname, "ui", "dist", "window.js");
 
+export type CommonInputSpec = {
+  message?: string;
+  submitLabel?: string;
+};
+
+export type TextInputSpec = CommonInputSpec & {
+  kind: "text";
+  placeholder?: string;
+  lines?: number;
+  format?: "text" | "json";
+};
+
+export type ImageInputSpec = CommonInputSpec & {
+  kind: "image";
+  width?: number;
+  height?: number;
+  mimeType?: string;
+  backgroundColor?: string;
+};
+
+export type InputSpec = TextInputSpec | ImageInputSpec;
+
+export type TextInputResult = {
+  kind: "text";
+  value: string;
+  format: "text" | "json";
+};
+
+export type ImageInputResult = {
+  kind: "image";
+  dataUrl: string;
+  mimeType: string;
+};
+
+export type InputResult = TextInputResult | ImageInputResult;
+
 export type LaunchResult =
-  | { action: "submit"; value: string }
+  | { action: "submit"; result: InputResult }
   | { action: "cancel" }
   | { action: "error"; message: string };
 
@@ -54,11 +90,9 @@ async function ensureUiBuilt(): Promise<void> {
 }
 
 export async function launchInputPrompt({
-  message,
-  placeholder
+  spec
 }: {
-  message: string;
-  placeholder?: string;
+  spec: InputSpec;
 }): Promise<LaunchResult> {
   await ensureUiBuilt();
   const electronModule: any = await import("electron");
@@ -78,8 +112,7 @@ export async function launchInputPrompt({
       stdio: ["ignore", "pipe", "inherit"],
       env: {
         ...process.env,
-        MCP_PROMPT_MESSAGE: message,
-        MCP_PROMPT_PLACEHOLDER: placeholder ?? ""
+        MCP_INPUT_SPEC: JSON.stringify(spec)
       }
     });
 
@@ -104,7 +137,6 @@ export async function launchInputPrompt({
       }
 
       try {
-        console.error("stdout", stdout);
         const parsed = JSON.parse(stdout);
         resolvePromise(parsed);
       } catch (error) {
@@ -116,8 +148,14 @@ export async function launchInputPrompt({
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   launchInputPrompt({
-    message: "Enter your input:",
-    placeholder: "Type something here..."
+    spec: {
+      kind: "text",
+      message: "Enter your input:",
+      placeholder: "Type something here...",
+      submitLabel: "Send",
+      lines: 1,
+      format: "text"
+    }
   })
     .then((result) => {
       console.log("Result:", result);
@@ -127,5 +165,3 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       process.exit(1);
     });
 }
-
-
