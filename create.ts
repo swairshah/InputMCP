@@ -141,14 +141,7 @@ export async function launchInputPrompt({
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   launchInputPrompt({
-    spec: {
-      kind: "text",
-      message: "Enter your input:",
-      placeholder: "Type something here...",
-      submitLabel: "Send",
-      lines: 1,
-      format: "text"
-    }
+    spec: normalizeSpec("text")
   })
     .then((result) => {
       console.log("Result:", result);

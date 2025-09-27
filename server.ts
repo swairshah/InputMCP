@@ -33,7 +33,7 @@ function extractImageContent(dataUrl: string, fallbackMime: string): { mimeType:
 server.registerTool("collect_input", {
     title: "Collect Input", 
     description: "get image or text input from user. This is used to get contextual input from the user of different kinds. ",
-    inputSchema: z.object({ kind: z.enum(["text", "image"]).optional() }),
+    inputSchema: { kind: z.enum(["text", "image"]).optional() },
 }, async ({ kind }) => {
     const spec = normalizeSpec(kind);
 

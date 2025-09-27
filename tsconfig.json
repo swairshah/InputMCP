@@ -20,7 +20,8 @@
   },
   "include": [
     "ui/**/*",
-    "shared/**/*"
+    "shared/**/*",
+    "*.ts"
   ],
   "exclude": [
     "node_modules",
