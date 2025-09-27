@@ -30,6 +30,35 @@ export type ImageInputSpec = CommonInputSpec & {
 
 export type InputSpec = TextInputSpec | ImageInputSpec;
 
+export type InputKind = "text" | "image";
+
+export function normalizeSpec(kind: InputKind | undefined): InputSpec {
+  const resolved = kind ?? "text";
+
+  if (resolved === "image") {
+    const imageOptions: ImageInputSpec = {
+      kind: "image",
+      message: "Draw your input:",
+      width: 512,
+      height: 512,
+      mimeType: "image/png",
+      submitLabel: "Send"
+    };
+    return imageOptions;
+  }
+
+  const textOptions: TextInputSpec = {
+    kind: "text",
+    message: "Enter your input:",
+    placeholder: "Type something here...",
+    submitLabel: "Send",
+    lines: 1,
+    format: "text"
+  };
+
+  return textOptions;
+}
+
 export type TextInputResult = {
   kind: "text";
   value: string;

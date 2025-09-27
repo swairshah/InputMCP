@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { launchInputPrompt, InputSpec, TextInputSpec, ImageInputSpec } from "./create.ts";
+import { launchInputPrompt, InputSpec, normalizeSpec } from "./create.ts";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
@@ -13,33 +13,6 @@ const server = new McpServer({
 })
 
 type InputKind = "text" | "image";
-
-function normalizeSpec(kind: InputKind | undefined): InputSpec {
-    const resolved = kind ?? "text";
-
-    if (resolved === "image") {
-        const imageOptions: ImageInputSpec = {
-            kind: "image",
-            message: "Draw your input:",
-            width: 512,
-            height: 512,
-            mimeType: "image/png",
-            submitLabel: "Send"
-        };
-        return imageOptions;
-    }
-
-    const textOptions: TextInputSpec = {
-        kind: "text",
-        message: "Enter your input:",
-        placeholder: "Type something here...",
-        submitLabel: "Send",
-        lines: 1,
-        format: "text"
-    };
-
-    return textOptions;
-}
 
 function extractImageContent(dataUrl: string, fallbackMime: string): { mimeType: string; data: string } {
     const match = dataUrl.match(/^data:(.+);base64,(.+)$/);
