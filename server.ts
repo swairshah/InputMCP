@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { launchInputPrompt, InputSpec, normalizeSpec } from "./create.ts";
+import { launchInputPrompt, normalizeSpec } from "./create.js";
+import { InputKind, InputCancelledError, InputFailedError } from "./shared/types.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
@@ -12,7 +13,7 @@ const server = new McpServer({
     },
 })
 
-type InputKind = "text" | "image";
+// InputKind now imported from shared/types.ts
 
 function extractImageContent(dataUrl: string, fallbackMime: string): { mimeType: string; data: string } {
     const match = dataUrl.match(/^data:(.+);base64,(.+)$/);
@@ -30,32 +31,34 @@ function extractImageContent(dataUrl: string, fallbackMime: string): { mimeType:
 }
 
 server.registerTool("collect_input", {
-    title: "Collect Input",
+    title: "Collect Input", 
     description: "get image or text input from user. This is used to get contextual input from the user of different kinds. ",
-    inputSchema: { kind: z.enum(["text", "image"]).optional() },
+    inputSchema: z.object({ kind: z.enum(["text", "image"]).optional() }),
 }, async ({ kind }) => {
     const spec = normalizeSpec(kind);
 
-    const result = await launchInputPrompt({ spec });
+    try {
+        const result = await launchInputPrompt({ spec });
 
-    if (result.action === "submit") {
-        if (result.result.kind === "text") {
-            return { content: [{ type: "text", text: result.result.value }] };
+        if (result.kind === "text") {
+            return { content: [{ type: "text", text: result.value }] };
         }
 
-        if (result.result.kind === "image") {
-            const { mimeType, data } = extractImageContent(result.result.dataUrl, result.result.mimeType);
+        if (result.kind === "image") {
+            const { mimeType, data } = extractImageContent(result.dataUrl, result.mimeType);
             return { content: [{ type: "image", mimeType, data }] };
         }
 
-        throw new Error(`Unsupported input result kind: ${(result.result as { kind?: string } | undefined)?.kind ?? "unknown"}`);
+        throw new Error(`Unsupported input result kind: ${(result as { kind?: string } | undefined)?.kind ?? "unknown"}`);
+    } catch (error) {
+        if (error instanceof InputCancelledError) {
+            throw new Error("User cancelled the input");
+        }
+        if (error instanceof InputFailedError) {
+            throw error; // Re-throw with original message
+        }
+        throw error; // Re-throw any other errors
     }
-
-    if (result.action === "cancel") {
-        throw new Error("User cancelled the input");
-    }
-
-    throw new Error(result.message);
 });
 
 // Start MCP server over stdio when invoked directly

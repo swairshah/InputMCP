@@ -1,16 +1,18 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import type { SubmissionResult } from '../shared/types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let mainWindow: BrowserWindow | null = null;
-type SubmitPayload =
-  | { kind: 'text'; value: string; format: 'text' | 'json' }
-  | { kind: 'image'; dataUrl: string; mimeType: string };
 
-type ResponsePayload = { action: 'submit'; result: SubmitPayload } | { action: 'cancel' };
+type SubmitPayload = SubmissionResult;
+type ResponsePayload = 
+  | { action: 'submit'; result: SubmissionResult }
+  | { action: 'cancel' }
+  | { action: 'error'; message: string };
 
 type WindowTextSpec = { kind: 'text'; lines: number };
 type WindowImageSpec = { kind: 'image'; width: number; height: number };

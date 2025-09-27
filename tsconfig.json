@@ -13,13 +13,14 @@
     "isolatedModules": true,
     "noEmit": false,
     "outDir": "./ui/dist",
-    "rootDir": "./ui",
+    "rootDir": ".",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true
   },
   "include": [
-    "ui/**/*"
+    "ui/**/*",
+    "shared/**/*"
   ],
   "exclude": [
     "node_modules",

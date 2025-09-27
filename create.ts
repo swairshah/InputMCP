@@ -8,75 +8,29 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const electronEntrypoint = resolve(__dirname, "ui", "dist", "window.js");
 
-export type CommonInputSpec = {
-  message?: string;
-  submitLabel?: string;
-};
-
-export type TextInputSpec = CommonInputSpec & {
-  kind: "text";
-  placeholder?: string;
-  lines?: number;
-  format?: "text" | "json";
-};
-
-export type ImageInputSpec = CommonInputSpec & {
-  kind: "image";
-  width?: number;
-  height?: number;
-  mimeType?: string;
-  backgroundColor?: string;
-};
-
-export type InputSpec = TextInputSpec | ImageInputSpec;
-
-export type InputKind = "text" | "image";
+import { 
+  InputSpec, 
+  InputKind,
+  TextInputSpecSchema,
+  ImageInputSpecSchema,
+  SubmissionResult,
+  InputCancelledError,
+  InputFailedError
+} from "./shared/types.js";
 
 export function normalizeSpec(kind: InputKind | undefined): InputSpec {
   const resolved = kind ?? "text";
 
   if (resolved === "image") {
-    const imageOptions: ImageInputSpec = {
-      kind: "image",
-      message: "Draw your input:",
-      width: 512,
-      height: 512,
-      mimeType: "image/png",
-      submitLabel: "Send"
-    };
-    return imageOptions;
+    // Use zod schema to create spec with defaults
+    return ImageInputSpecSchema.parse({ kind: "image" });
   }
 
-  const textOptions: TextInputSpec = {
-    kind: "text",
-    message: "Enter your input:",
-    placeholder: "Type something here...",
-    submitLabel: "Send",
-    lines: 1,
-    format: "text"
-  };
-
-  return textOptions;
+  // Use zod schema to create spec with defaults  
+  return TextInputSpecSchema.parse({ kind: "text" });
 }
 
-export type TextInputResult = {
-  kind: "text";
-  value: string;
-  format: "text" | "json";
-};
-
-export type ImageInputResult = {
-  kind: "image";
-  dataUrl: string;
-  mimeType: string;
-};
-
-export type InputResult = TextInputResult | ImageInputResult;
-
-export type LaunchResult =
-  | { action: "submit"; result: InputResult }
-  | { action: "cancel" }
-  | { action: "error"; message: string };
+// Types now imported from shared/types.ts
 
 async function fileExists(path: string): Promise<boolean> {
   try {
@@ -122,7 +76,7 @@ export async function launchInputPrompt({
   spec
 }: {
   spec: InputSpec;
-}): Promise<LaunchResult> {
+}): Promise<SubmissionResult> {
   await ensureUiBuilt();
   const electronModule: any = await import("electron");
   const electronBinary =
@@ -136,7 +90,7 @@ export async function launchInputPrompt({
     throw new Error("Electron binary not found, make sure electron is installed");
   }
 
-  return new Promise<LaunchResult>((resolvePromise, rejectPromise) => {
+  return new Promise<SubmissionResult>((resolvePromise, rejectPromise) => {
     const child = spawn(electronBinary, [electronEntrypoint], {
       stdio: ["ignore", "pipe", "inherit"],
       env: {
@@ -156,20 +110,30 @@ export async function launchInputPrompt({
 
     child.once("exit", (code) => {
       if (code !== 0) {
-        resolvePromise({ action: "error", message: `Electron process exited with code ${code}` });
+        rejectPromise(new InputFailedError(`Electron process exited with code ${code}`));
         return;
       }
 
       if (!stdout.trim()) {
-        resolvePromise({ action: "error", message: "No response from Electron process" });
+        rejectPromise(new InputFailedError("No response from Electron process"));
         return;
       }
 
       try {
         const parsed = JSON.parse(stdout);
-        resolvePromise(parsed);
+        
+        // Handle the different action types
+        if (parsed.action === "submit") {
+          resolvePromise(parsed.result);
+        } else if (parsed.action === "cancel") {
+          rejectPromise(new InputCancelledError());
+        } else if (parsed.action === "error") {
+          rejectPromise(new InputFailedError(parsed.message));
+        } else {
+          rejectPromise(new InputFailedError(`Unknown action: ${parsed.action}`));
+        }
       } catch (error) {
-        resolvePromise({ action: "error", message: `Invalid JSON response: ${stdout}` });
+        rejectPromise(new InputFailedError(`Invalid JSON response: ${stdout}`));
       }
     });
   });
