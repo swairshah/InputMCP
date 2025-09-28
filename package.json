@@ -5,11 +5,21 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "bun run create",
-    "create": "bun ./create.ts",
-    "build": "tsc",
-    "build:ui": "esbuild ui/renderer.ts --bundle --outfile=ui/dist/renderer.bundle.js --platform=browser --format=iife --external:electron && esbuild ui/window.ts --outfile=ui/dist/ui/window.js --platform=node --format=esm --target=es2020 && cp ui/index.html ui/dist/"
+    "start": "node dist/server.js",
+    "dev:ui": "esbuild ui/renderer.ts --bundle --outfile=ui/dist/renderer.bundle.js --platform=browser --format=iife --external:electron --sourcemap --watch",
+    "dev:window": "esbuild ui/window.ts --outfile=ui/dist/ui/window.js --platform=node --format=esm --target=es2020 --sourcemap --watch",
+    "dev:server": "tsx watch server.ts",
+    "dev": "npm run build:ui && tsx watch server.ts",
+    "build": "npm run build:ui && npm run build:server",
+    "build:ui": "esbuild ui/renderer.ts --bundle --outfile=ui/dist/renderer.bundle.js --platform=browser --format=iife --external:electron && esbuild ui/window.ts --outfile=ui/dist/ui/window.js --platform=node --format=esm --target=es2020 && cp ui/index.html ui/dist/",
+    "build:ui:prod": "esbuild ui/renderer.ts --bundle --minify --outfile=ui/dist/renderer.bundle.js --platform=browser --format=iife --external:electron && esbuild ui/window.ts --minify --outfile=ui/dist/ui/window.js --platform=node --format=esm --target=es2020 && cp ui/index.html ui/dist/",
+    "build:server": "esbuild server.ts create.ts shared/types.ts --platform=node --format=esm --target=es2020 --outdir=dist --out-extension:.js=.js",
+    "build:server:prod": "esbuild server.ts create.ts shared/types.ts --platform=node --format=esm --target=es2020 --minify --outdir=dist --out-extension:.js=.js",
+    "build:prod": "npm run build:ui:prod && npm run build:server:prod",
+    "typecheck": "tsc --noEmit",
+    "test:ui": "bun run build:ui && bun ./create.ts",
+    "test:image": "bunx tsx scripts/test-input.ts image",
+    "test:text": "bunx tsx scripts/test-input.ts text"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.2",

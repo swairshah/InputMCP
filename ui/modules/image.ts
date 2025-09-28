@@ -28,15 +28,13 @@ export function mountImageModule(spec: ImageInputSpec, ctx: RendererContext): vo
   // Create color picker
   const colorPicker = document.createElement('div');
   colorPicker.classList.add('color-picker');
-  console.log('Creating color picker element');
-  
+
   const colorInput = document.createElement('input');
   colorInput.type = 'color';
   colorInput.value = '#000000';
   colorPicker.appendChild(colorInput);
-  
+
   canvasContainer.appendChild(colorPicker);
-  console.log('Color picker added to canvas container');
 
   // Set initial canvas size
   function updateCanvasSize() {
