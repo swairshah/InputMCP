@@ -13,8 +13,6 @@ const server = new McpServer({
     },
 })
 
-// InputKind now imported from shared/types.ts
-
 function extractImageContent(dataUrl: string, fallbackMime: string): { mimeType: string; data: string } {
     const match = dataUrl.match(/^data:(.+);base64,(.+)$/);
     if (!match) {

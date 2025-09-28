@@ -28,7 +28,6 @@ type RendererImageSpec = {
 
 type RendererSpec = RendererTextSpec | RendererImageSpec;
 
-// SubmitPayload is now the same as SubmissionResult
 type SubmitPayload = SubmissionResult;
 
 function requireDiv(id: string): HTMLDivElement {
@@ -87,12 +86,6 @@ function submit(payload: SubmitPayload): void {
   ipcRenderer.send('submit', payload);
 }
 
-function submitModular(result: SubmissionResult): void {
-  // Types are now unified - no conversion needed!
-  submit(result);
-}
-
-
 
 function buildPrimaryButton(label: string, handler: () => void): HTMLButtonElement {
   const button = document.createElement('button');
@@ -137,7 +130,7 @@ function createRendererContext(): RendererContext {
     },
     setStatus: showError,
     clearStatus,
-    submit: submitModular,
+    submit: submit,
     cancel
   };
 }
