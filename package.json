@@ -9,7 +9,7 @@
     "dev": "bun run create",
     "create": "bun ./create.ts",
     "build": "tsc",
-    "build:ui": "tsc && cp ui/index.html ui/dist/"
+    "build:ui": "esbuild ui/renderer.ts --bundle --outfile=ui/dist/renderer.bundle.js --platform=browser --format=iife --external:electron && esbuild ui/window.ts --outfile=ui/dist/ui/window.js --platform=node --format=esm --target=es2020 && cp ui/index.html ui/dist/"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.2",
@@ -19,10 +19,16 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
-    "tsx": "^4.0.0"
+    "esbuild": "^0.25.10",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
   },
-  "keywords": ["mcp", "electron", "input", "prompt"],
+  "keywords": [
+    "mcp",
+    "electron",
+    "input",
+    "prompt"
+  ],
   "author": "",
   "license": "MIT"
 }

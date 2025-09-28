@@ -5,129 +5,194 @@
   <style>
     :root {
       color-scheme: light dark;
+      --primary: #80b7ff;
+      --accent: #f28478;
+      --bg: #ffffff;
+      --bg-secondary: #f8fafb;
+      --text: #1a1a1a;
+      --text-light: #6b7280;
+      --border: #e5e7eb;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       margin: 0;
-      padding: 20px;
-      background: #f5f5f5;
-      color: #222;
+      padding: 12px;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      box-sizing: border-box;
+      overflow: hidden;
     }
 
     .container {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      height: calc(100vh - 24px);
+      min-height: 200px;
     }
 
     .message {
-      font-size: 14px;
-      color: #333;
+      display: none;
     }
 
     .content {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      flex: 1 1 auto;
+      min-height: 60px;
+      margin-bottom: 8px;
+      overflow: hidden;
     }
 
     .status {
       min-height: 18px;
       font-size: 12px;
-      color: #c0392b;
+      color: var(--accent);
+      margin: 0 0 6px 0;
+      flex-shrink: 0;
+      empty-cells: hide;
     }
 
     .actions {
       display: flex;
       justify-content: flex-end;
-      gap: 10px;
+      gap: 8px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
     }
 
     .text-input {
-      padding: 8px 12px;
-      border: 1px solid #d0d0d0;
+      appearance: none;
+      padding: 10px;
+      border: 1px solid var(--border);
       border-radius: 6px;
       font-size: 14px;
-      resize: vertical;
       font-family: inherit;
+      resize: vertical;
       min-height: 36px;
+      background: var(--bg);
+      color: var(--text);
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+      width: 100%;
+      flex: 1;
+    }
+
+    .text-input:focus {
+      border-color: var(--primary);
+      outline: none;
     }
 
     .draw-canvas {
-      background: #fff;
-      border: 1px solid #d0d0d0;
+      background: var(--bg);
+      border: 1px solid var(--border);
       border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-      width: 100%;
-      height: auto;
-      max-height: 70vh;
       display: block;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .canvas-container {
+      position: relative;
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+      overflow: auto;
+      padding: 8px;
+    }
+
+    .color-picker {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      background: #000000;
+      z-index: 10;
+      transition: border-color 0.2s;
+    }
+
+    .color-picker:hover {
+      border-color: var(--primary);
+    }
+
+    .color-picker input[type="color"] {
+      opacity: 0;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      border: none;
     }
 
     button {
-      padding: 8px 18px;
+      appearance: none;
+      padding: 8px 16px;
       border-radius: 6px;
       border: none;
-      font-size: 14px;
+      font-size: 13px;
+      font-family: inherit;
       cursor: pointer;
-      transition: background 0.15s ease, transform 0.1s ease;
+      transition: opacity 0.2s;
+      white-space: nowrap;
     }
 
-    button:active {
-      transform: translateY(1px);
+    button:hover {
+      opacity: 0.9;
     }
 
     button.primary {
-      background: #007aff;
-      color: #fff;
-    }
-
-    button.primary:hover {
-      background: #005bcc;
+      background: var(--primary);
+      color: #ffffff;
     }
 
     button.secondary {
-      background: #e0e0e0;
-      color: #222;
+      background: var(--accent);
+      color: #ffffff;
     }
 
-    button.secondary:hover {
-      background: #cfcfcf;
+    /* Small window adjustments */
+    @media (max-height: 400px) {
+      body {
+        padding: 8px;
+      }
+      .container {
+        height: calc(100vh - 16px);
+        min-height: 150px;
+      }
+      button {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+      .content {
+        min-height: 40px;
+      }
+      .actions {
+        padding-top: 6px;
+      }
     }
 
     @media (prefers-color-scheme: dark) {
-      body {
-        background: #1f1f1f;
-        color: #f1f1f1;
-      }
-
-      .message {
-        color: #f1f1f1;
-      }
-
-      .text-input {
-        border-color: #444;
-        background: #2b2b2b;
-        color: #f1f1f1;
+      :root {
+        --primary: #80b7ff;
+        --accent: #f28478;
+        --bg: #0a0a0a;
+        --bg-secondary: #141414;
+        --text: #f5f5f5;
+        --text-light: #9ca3af;
+        --border: #262626;
       }
 
       .draw-canvas {
-        background: #2b2b2b;
-        border-color: #444;
-      }
-
-      .status {
-        color: #ff6b6b;
-      }
-
-      button.secondary {
-        background: #444;
-        color: #f1f1f1;
-      }
-
-      button.secondary:hover {
-        background: #555;
+        background: var(--bg-secondary);
       }
     }
   </style>
@@ -139,6 +204,6 @@
     <div class="status" id="status"></div>
     <div class="actions" id="actions"></div>
   </div>
-  <script src="renderer.js"></script>
+  <script src="renderer.bundle.js"></script>
 </body>
 </html>

@@ -14,13 +14,56 @@ function resetCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, b
 export function mountImageModule(spec: ImageInputSpec, ctx: RendererContext): void {
   ctx.contentEl.innerHTML = '';
 
+  // Create canvas container
+  const canvasContainer = document.createElement('div');
+  canvasContainer.classList.add('canvas-container');
+  ctx.contentEl.appendChild(canvasContainer);
+
   const canvas = document.createElement('canvas');
-  canvas.width = spec.width;
-  canvas.height = spec.height;
   canvas.classList.add('draw-canvas');
   canvas.style.touchAction = 'none';
   canvas.tabIndex = 0;
-  ctx.contentEl.appendChild(canvas);
+  canvasContainer.appendChild(canvas);
+
+  // Create color picker
+  const colorPicker = document.createElement('div');
+  colorPicker.classList.add('color-picker');
+  console.log('Creating color picker element');
+  
+  const colorInput = document.createElement('input');
+  colorInput.type = 'color';
+  colorInput.value = '#000000';
+  colorPicker.appendChild(colorInput);
+  
+  canvasContainer.appendChild(colorPicker);
+  console.log('Color picker added to canvas container');
+
+  // Set initial canvas size
+  function updateCanvasSize() {
+    const container = ctx.contentEl;
+    const containerRect = container.getBoundingClientRect();
+    const aspectRatio = spec.width / spec.height;
+    
+    // Use container dimensions while maintaining aspect ratio
+    let canvasWidth = containerRect.width;
+    let canvasHeight = containerRect.height;
+    
+    // Maintain aspect ratio
+    if (canvasWidth / canvasHeight > aspectRatio) {
+      canvasWidth = canvasHeight * aspectRatio;
+    } else {
+      canvasHeight = canvasWidth / aspectRatio;
+    }
+    
+    // Set display size and internal resolution
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
+    canvas.width = spec.width;
+    canvas.height = spec.height;
+  }
+
+  updateCanvasSize();
+  window.addEventListener('resize', updateCanvasSize);
 
   const context = canvas.getContext('2d');
   if (!context) {
@@ -35,6 +78,7 @@ export function mountImageModule(spec: ImageInputSpec, ctx: RendererContext): vo
   let drawing = false;
   let prevX = 0;
   let prevY = 0;
+  let currentColor = '#000000';
 
   function getPosition(event: PointerEvent): { x: number; y: number } {
     const rect = canvas.getBoundingClientRect();
@@ -64,7 +108,7 @@ export function mountImageModule(spec: ImageInputSpec, ctx: RendererContext): vo
     drawingContext.lineCap = 'round';
     drawingContext.lineJoin = 'round';
     drawingContext.lineWidth = 4;
-    drawingContext.strokeStyle = '#222';
+    drawingContext.strokeStyle = currentColor;
     drawingContext.beginPath();
     drawingContext.moveTo(prevX, prevY);
     drawingContext.lineTo(x, y);
@@ -99,6 +143,16 @@ export function mountImageModule(spec: ImageInputSpec, ctx: RendererContext): vo
   canvas.addEventListener('pointerleave', pointerCancel);
   canvas.addEventListener('contextmenu', (event) => event.preventDefault());
 
+  // Color picker functionality
+  colorInput.addEventListener('change', (event) => {
+    const target = event.target as HTMLInputElement;
+    currentColor = target.value;
+    colorPicker.style.backgroundColor = currentColor;
+  });
+
+  // Initialize color picker appearance
+  colorPicker.style.backgroundColor = currentColor;
+
   const clearButton = ctx.makeSecondaryButton('Clear', () => {
     ctx.clearStatus();
     resetCanvas(drawingContext, canvas, spec.backgroundColor);
@@ -113,6 +167,27 @@ export function mountImageModule(spec: ImageInputSpec, ctx: RendererContext): vo
     };
     ctx.submit(result);
   });
+
+  // Add keyboard shortcuts
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      event.preventDefault();
+      ctx.clearStatus();
+      resetCanvas(drawingContext, canvas, spec.backgroundColor);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      const dataUrl = canvas.toDataURL(spec.mimeType);
+      const result: SubmissionResult = {
+        kind: 'image',
+        dataUrl,
+        mimeType: spec.mimeType
+      };
+      ctx.submit(result);
+    }
+  };
+
+  canvas.addEventListener('keydown', handleKeyDown);
+  document.addEventListener('keydown', handleKeyDown);
 
   ctx.renderActions(submitButton, [clearButton]);
 

@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import type { SubmissionResult } from '../shared/types';
+import type { SubmissionResult } from '../shared/types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -82,9 +82,9 @@ function createWindow(): void {
   });
 
   // Load HTML file instead of inline HTML
-  const htmlPath = path.join(__dirname, 'index.html');
+  const htmlPath = path.join(__dirname, '../index.html');
   mainWindow.loadFile(htmlPath);
-  
+
   mainWindow.on('closed', () => {
     mainWindow = null;
     respond({ action: 'cancel' });

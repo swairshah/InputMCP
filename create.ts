@@ -6,7 +6,7 @@ import { dirname, resolve } from "node:path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const electronEntrypoint = resolve(__dirname, "ui", "dist", "window.js");
+const electronEntrypoint = resolve(__dirname, "ui", "dist", "ui", "window.js");
 
 import { 
   InputSpec, 
@@ -44,8 +44,8 @@ async function fileExists(path: string): Promise<boolean> {
 async function ensureUiBuilt(): Promise<void> {
   const distDir = resolve(__dirname, "ui", "dist");
   const distIndex = resolve(distDir, "index.html");
-  const distWindow = resolve(distDir, "window.js");
-  const distRenderer = resolve(distDir, "renderer.js");
+  const distWindow = resolve(distDir, "ui", "window.js");
+  const distRenderer = resolve(distDir, "ui", "renderer.js");
 
   const hasAll = await Promise.all([
     fileExists(distIndex),
