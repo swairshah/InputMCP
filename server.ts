@@ -3,6 +3,7 @@ import { launchInputPrompt, normalizeSpec } from "./create.js";
 import { InputKind, InputCancelledError, InputFailedError } from "./shared/types.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
+import { saveImageToCache, cleanOldCache } from "./shared/cache.js";
 
 const server = new McpServer({
     name: "input-mcp",
@@ -43,8 +44,17 @@ server.registerTool("collect_input", {
         }
 
         if (result.kind === "image") {
+            // Save image to cache
+            const cachedPath = await saveImageToCache(result.dataUrl);
+
+            // Extract image data for MCP response
             const { mimeType, data } = extractImageContent(result.dataUrl, result.mimeType);
-            return { content: [{ type: "image", mimeType, data }] };
+
+            // Include cache path as metadata
+            return {
+                content: [{ type: "image", mimeType, data }],
+                metadata: { cachedPath }
+            };
         }
 
         throw new Error(`Unsupported input result kind: ${(result as { kind?: string } | undefined)?.kind ?? "unknown"}`);
@@ -57,6 +67,15 @@ server.registerTool("collect_input", {
         }
         throw error; // Re-throw any other errors
     }
+});
+
+// Clean up old cache files on startup (older than 7 days)
+cleanOldCache(7).then(deletedCount => {
+    if (deletedCount > 0) {
+        console.error(`Cleaned ${deletedCount} old cached images`);
+    }
+}).catch(error => {
+    console.error("Failed to clean cache:", error);
 });
 
 // Start MCP server over stdio when invoked directly
