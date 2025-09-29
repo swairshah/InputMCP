@@ -22,14 +22,33 @@ export const ImageInputSpecSchema = z.object({
   backgroundColor: z.string().optional()
 });
 
+export const PixelInputSpecSchema = z.object({
+  kind: z.literal('pixel'),
+  ui: z.literal('pixel').default('pixel'),
+  message: z.string().default('Create pixel art:'),
+  submitLabel: z.string().default('Send'),
+  gridWidth: z.number().int().min(8).max(128).default(32),
+  gridHeight: z.number().int().min(8).max(128).default(32),
+  pixelSize: z.number().int().min(4).max(32).default(16),
+  mimeType: z.string().default('image/png'),
+  backgroundColor: z.string().default('#ffffff'),
+  palette: z.array(z.string()).default([
+    '#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00',
+    '#ff00ff', '#00ffff', '#808080', '#c0c0c0', '#800000', '#008000',
+    '#000080', '#808000', '#800080', '#008080', '#ff8080', '#80ff80'
+  ])
+});
+
 export const InputSpecSchema = z.discriminatedUnion('kind', [
   TextInputSpecSchema,
-  ImageInputSpecSchema
+  ImageInputSpecSchema,
+  PixelInputSpecSchema
 ]);
 
 // Inferred types (now include defaults and ui field)
 export type TextInputSpec = z.infer<typeof TextInputSpecSchema>;
 export type ImageInputSpec = z.infer<typeof ImageInputSpecSchema>;
+export type PixelInputSpec = z.infer<typeof PixelInputSpecSchema>;
 export type InputSpec = z.infer<typeof InputSpecSchema>;
 
 // Legacy aliases - now just point to the same unified types
@@ -48,6 +67,12 @@ export const SubmissionResultSchema = z.discriminatedUnion('kind', [
     kind: z.literal('image'),
     dataUrl: z.string(),
     mimeType: z.string()
+  }),
+  z.object({
+    kind: z.literal('pixel'),
+    dataUrl: z.string(),
+    mimeType: z.string(),
+    gridData: z.array(z.array(z.string())).optional() // Optional grid data for recreation
   })
 ]);
 
@@ -56,6 +81,7 @@ export type SubmissionResult = z.infer<typeof SubmissionResultSchema>;
 // Aliases for backward compatibility (all use same unified type now)
 export type TextInputResult = Extract<SubmissionResult, { kind: 'text' }>;
 export type ImageInputResult = Extract<SubmissionResult, { kind: 'image' }>;
+export type PixelInputResult = Extract<SubmissionResult, { kind: 'pixel' }>;
 export type InputResult = SubmissionResult;
 
 // Custom error classes for input operations
@@ -88,7 +114,7 @@ export interface RendererContext {
 }
 
 // Input kind type
-export type InputKind = 'text' | 'image';
+export type InputKind = 'text' | 'image' | 'pixel';
 
 // Validation functions
 export function validateInputSpec(spec: unknown): InputSpec {

@@ -13,6 +13,7 @@ import {
   InputKind,
   TextInputSpecSchema,
   ImageInputSpecSchema,
+  PixelInputSpecSchema,
   SubmissionResult,
   InputCancelledError,
   InputFailedError
@@ -20,6 +21,11 @@ import {
 
 export function normalizeSpec(kind: InputKind | undefined): InputSpec {
   const resolved = kind ?? "text";
+
+  if (resolved === "pixel") {
+    // Use zod schema to create spec with defaults
+    return PixelInputSpecSchema.parse({ kind: "pixel" });
+  }
 
   if (resolved === "image") {
     // Use zod schema to create spec with defaults

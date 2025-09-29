@@ -191,11 +191,30 @@
         --border: #262626;
       }
 
-      .draw-canvas {
-        background: var(--bg-secondary);
-      }
+    .draw-canvas {
+      background: var(--bg-secondary);
     }
-  </style>
+  }
+
+  /* Pixel art editor styles */
+  .pixel-canvas {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .pixel-canvas:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .pixel-canvas-container {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 16px;
+  }
+</style>
 </head>
 <body>
   <div class="container" id="container">
