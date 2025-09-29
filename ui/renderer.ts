@@ -1,10 +1,11 @@
 // Using require keeps compatibility with Electron's renderer when nodeIntegration is enabled.
 const { ipcRenderer } = require('electron') as typeof import('electron');
 
-import type { InputSpec, TextInputSpec, ImageInputSpec, SubmissionResult, RendererContext } from '../shared/types';
+import type { InputSpec, TextInputSpec, ImageInputSpec, PixelInputSpec, SubmissionResult, RendererContext } from '../shared/types';
 import { InputSpecSchema } from '../shared/types';
 import { mountTextModule } from './modules/text.js';
 import { mountImageModule } from './modules/image.js';
+import { mountPixelModule } from './modules/pixel.js';
 
 // Legacy types for backward compatibility during migration
 type RendererTextSpec = {
@@ -26,7 +27,18 @@ type RendererImageSpec = {
   backgroundColor?: string;
 };
 
-type RendererSpec = RendererTextSpec | RendererImageSpec;
+type RendererPixelSpec = {
+  kind: 'pixel';
+  message: string;
+  submitLabel: string;
+  width: number;
+  height: number;
+  pixelSize: number;
+  mimeType: string;
+  backgroundColor?: string;
+};
+
+type RendererSpec = RendererTextSpec | RendererImageSpec | RendererPixelSpec;
 
 type SubmitPayload = SubmissionResult;
 
@@ -140,6 +152,8 @@ function setup(): void {
 
   if (spec.ui === 'image') {
     mountImageModule(spec as ImageInputSpec, context);
+  } else if (spec.ui === 'pixel') {
+    mountPixelModule(spec as PixelInputSpec, context);
   } else {
     mountTextModule(spec as TextInputSpec, context);
   }

@@ -22,14 +22,28 @@ export const ImageInputSpecSchema = z.object({
   backgroundColor: z.string().optional()
 });
 
+export const PixelInputSpecSchema = z.object({
+  kind: z.literal('pixel'),
+  ui: z.literal('pixel').default('pixel'),
+  message: z.string().default('Create pixel art:'),
+  submitLabel: z.string().default('Send'),
+  width: z.number().int().min(8).max(1024).default(64),
+  height: z.number().int().min(8).max(1024).default(64),
+  pixelSize: z.number().int().min(1).max(64).default(16),
+  mimeType: z.string().default('image/png'),
+  backgroundColor: z.string().optional()
+});
+
 export const InputSpecSchema = z.discriminatedUnion('kind', [
   TextInputSpecSchema,
-  ImageInputSpecSchema
+  ImageInputSpecSchema,
+  PixelInputSpecSchema
 ]);
 
 // Inferred types (now include defaults and ui field)
 export type TextInputSpec = z.infer<typeof TextInputSpecSchema>;
 export type ImageInputSpec = z.infer<typeof ImageInputSpecSchema>;
+export type PixelInputSpec = z.infer<typeof PixelInputSpecSchema>;
 export type InputSpec = z.infer<typeof InputSpecSchema>;
 
 // Legacy aliases - now just point to the same unified types
@@ -88,7 +102,7 @@ export interface RendererContext {
 }
 
 // Input kind type
-export type InputKind = 'text' | 'image';
+export type InputKind = 'text' | 'image' | 'pixel';
 
 // Validation functions
 export function validateInputSpec(spec: unknown): InputSpec {

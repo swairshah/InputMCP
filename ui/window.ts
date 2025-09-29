@@ -16,13 +16,14 @@ type ResponsePayload =
 
 type WindowTextSpec = { kind: 'text'; lines: number };
 type WindowImageSpec = { kind: 'image'; width: number; height: number };
-type WindowSpec = WindowTextSpec | WindowImageSpec;
+type WindowPixelSpec = { kind: 'pixel'; width: number; height: number; pixelSize: number };
+type WindowSpec = WindowTextSpec | WindowImageSpec | WindowPixelSpec;
 
 function parseWindowSpec(raw: string | undefined): WindowSpec {
   if (raw) {
     try {
       const parsed = JSON.parse(raw) as Record<string, unknown>;
-      if (parsed.kind === 'image') {
+      if (parsed.kind === 'image' || parsed.kind === 'pixel') {
         const rawWidth = typeof parsed.width === 'number' && Number.isFinite(parsed.width)
           ? parsed.width
           : undefined;
@@ -31,6 +32,13 @@ function parseWindowSpec(raw: string | undefined): WindowSpec {
           : undefined;
         const width = rawWidth !== undefined ? Math.max(32, Math.min(4096, Math.floor(rawWidth))) : 512;
         const height = rawHeight !== undefined ? Math.max(32, Math.min(4096, Math.floor(rawHeight))) : 512;
+        if (parsed.kind === 'pixel') {
+          const rawPixel = typeof (parsed as any).pixelSize === 'number' && Number.isFinite((parsed as any).pixelSize)
+            ? (parsed as any).pixelSize
+            : undefined;
+          const pixelSize = rawPixel !== undefined ? Math.max(1, Math.min(64, Math.floor(rawPixel))) : 16;
+          return { kind: 'pixel', width, height, pixelSize };
+        }
         return { kind: 'image', width, height };
       }
 
@@ -58,7 +66,7 @@ function respond(payload: ResponsePayload): void {
 }
 
 function createWindow(): void {
-  const { width, height } = windowSpec.kind === 'image'
+const { width, height } = windowSpec.kind === 'image' || windowSpec.kind === 'pixel'
     ? {
         width: Math.max(720, Math.min(windowSpec.width + 200, 1600)),
         height: Math.max(520, Math.min(windowSpec.height + 260, 1200))
