@@ -15,27 +15,31 @@ const server = new McpServer({
     },
 })
 
-function extractImageContent(dataUrl: string, fallbackMime: string): { mimeType: string; data: string } {
-    const match = dataUrl.match(/^data:(.+);base64,(.+)$/);
-    if (!match) {
-        throw new Error("Invalid image data returned from input UI");
-    }
-
-    const [, mimeType, base64Data] = match;
-    const cleanData = base64Data.replace(/\s+/g, "");
-
-    return {
-        mimeType: mimeType || fallbackMime,
-        data: cleanData
-    };
-}
-
 server.registerTool("collect_input", {
     title: "Collect Input", 
     description: "get image, text, or pixel art input from user. This is used to get contextual input from the user of different kinds. ",
-    inputSchema: { kind: z.enum(["text", "image", "pixelart"]).optional() },
-}, async ({ kind }) => {
-    const spec = normalizeSpec(kind);
+    inputSchema: { 
+        kind: z.enum(["text", "image", "pixelart"]).optional(),
+        initialImage: z.string().optional().describe("Initial image to load for editing (file path)"),
+        gridWidth: z.number().int().min(4).max(128).optional().describe("Grid width for pixel art (default: 16)"),
+        gridHeight: z.number().int().min(4).max(128).optional().describe("Grid height for pixel art (default: 16)"),
+        width: z.number().int().min(32).max(4096).optional().describe("Canvas width for image mode (default: 512)"),
+        height: z.number().int().min(32).max(4096).optional().describe("Canvas height for image mode (default: 512)"),
+        message: z.string().optional().describe("Custom message to show to the user")
+    },
+}, async ({ kind, initialImage, gridWidth, gridHeight, width, height, message }) => {
+    const baseSpec = normalizeSpec(kind);
+    
+    // Apply custom parameters
+    const spec = {
+        ...baseSpec,
+        ...(initialImage && { initialImage }),
+        ...(message && { message }),
+        ...(baseSpec.kind === 'pixelart' && gridWidth && { gridWidth }),
+        ...(baseSpec.kind === 'pixelart' && gridHeight && { gridHeight }),
+        ...(baseSpec.kind === 'image' && width && { width }),
+        ...(baseSpec.kind === 'image' && height && { height })
+    };
 
     try {
         const result = await launchInputPrompt({ spec });
@@ -48,13 +52,13 @@ server.registerTool("collect_input", {
             // Save image to cache
             const cachedPath = await saveImageToCache(result.dataUrl);
 
-            // Extract image data for MCP response
-            const { mimeType, data } = extractImageContent(result.dataUrl, result.mimeType);
-
-            // Include cache path as metadata
+            // Return the file path as text instead of base64 image data
             return {
-                content: [{ type: "image", mimeType, data }],
-                metadata: { cachedPath }
+                content: [{ 
+                    type: "text", 
+                    text: cachedPath 
+                }],
+                isError: false
             };
         }
 

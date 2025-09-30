@@ -1,12 +1,12 @@
 import { spawn } from "node:child_process";
-import { access } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import { constants as FsConstants } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { basename, dirname, resolve } from "node:path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const projectRoot = resolve(__dirname, "../..");
+const projectRoot = resolve(__dirname, "..");
 const uiDistDir = resolve(projectRoot, "dist", "ui");
 const electronEntrypoint = resolve(uiDistDir, "window.js");
 const rendererBundlePath = resolve(uiDistDir, "renderer.bundle.js");
@@ -23,6 +23,36 @@ import {
   InputFailedError
 } from "./shared/types.js";
 
+async function loadImageAsDataURL(imagePath: string): Promise<string> {
+  // If it's already a data URL, return it
+  if (imagePath.startsWith('data:')) {
+    return imagePath;
+  }
+
+  // Otherwise, treat it as a file path
+  try {
+    const imageBuffer = await readFile(imagePath);
+    
+    // Detect mime type from file extension
+    const ext = imagePath.toLowerCase().split('.').pop();
+    let mimeType = 'image/png';
+    if (ext === 'jpg' || ext === 'jpeg') {
+      mimeType = 'image/jpeg';
+    } else if (ext === 'gif') {
+      mimeType = 'image/gif';
+    } else if (ext === 'webp') {
+      mimeType = 'image/webp';
+    } else if (ext === 'bmp') {
+      mimeType = 'image/bmp';
+    }
+    
+    const base64 = imageBuffer.toString('base64');
+    return `data:${mimeType};base64,${base64}`;
+  } catch (error) {
+    throw new InputFailedError(`Failed to load image from path: ${imagePath}`);
+  }
+}
+
 export function normalizeSpec(kind: InputKind | undefined): InputSpec {
   const resolved = kind ?? "text";
 
@@ -34,7 +64,7 @@ export function normalizeSpec(kind: InputKind | undefined): InputSpec {
     return PixelArtInputSpecSchema.parse({ kind: "pixelart" });
   }
 
-  return TextInputSpecSchema.parse({ kind: "image" });
+  return TextInputSpecSchema.parse({ kind: "text" });
 }
 
 async function fileExists(path: string): Promise<boolean> {
@@ -78,6 +108,14 @@ export async function launchInputPrompt({
   spec: InputSpec;
 }): Promise<SubmissionResult> {
   await ensureUiBuilt();
+  
+  // Process initialImage if present
+  let processedSpec = spec;
+  if ((spec.kind === 'image' || spec.kind === 'pixelart') && spec.initialImage) {
+    const dataURL = await loadImageAsDataURL(spec.initialImage);
+    processedSpec = { ...spec, initialImage: dataURL };
+  }
+  
   const electronModule: any = await import("electron");
   const electronBinary =
     typeof electronModule === "string"
@@ -95,7 +133,7 @@ export async function launchInputPrompt({
       stdio: ["ignore", "pipe", "inherit"],
       env: {
         ...process.env,
-        MCP_INPUT_SPEC: JSON.stringify(spec)
+        MCP_INPUT_SPEC: JSON.stringify(processedSpec)
       }
     });
 
@@ -139,7 +177,12 @@ export async function launchInputPrompt({
   });
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Only run test window if this file is executed directly (not when imported by server.ts)
+// Check both that it's the main module AND that it ends with create.js/create.ts
+const isMainModule = import.meta.url === `file://${process.argv[1]}`;
+const isCreateFile = import.meta.url.includes('create.js') || import.meta.url.includes('create.ts');
+
+if (isMainModule && isCreateFile && !import.meta.url.includes('server.js')) {
   launchInputPrompt({
     spec: normalizeSpec("text")
   })

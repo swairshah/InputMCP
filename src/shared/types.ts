@@ -19,7 +19,8 @@ export const ImageInputSpecSchema = z.object({
   width: z.number().int().min(32).max(4096).default(512),
   height: z.number().int().min(32).max(4096).default(512),
   mimeType: z.string().default('image/png'),
-  backgroundColor: z.string().optional()
+  backgroundColor: z.string().optional(),
+  initialImage: z.string().optional() // Can be file path or base64 data URL
 });
 
 export const PixelArtInputSpecSchema = z.object({
@@ -32,7 +33,8 @@ export const PixelArtInputSpecSchema = z.object({
   cellSize: z.number().int().min(4).max(64).default(20),
   palette: z.array(z.string()).default(['#000000', '#FFFFFF', '#f28478', '#a8e6cf', '#80b7ff', '#ffd89b', '#dda0dd', '#b0e0e6']),
   backgroundColor: z.string().default('#FFFFFF'),
-  mimeType: z.string().default('image/png')
+  mimeType: z.string().default('image/png'),
+  initialImage: z.string().optional() // Can be file path or base64 data URL
 });
 
 export const InputSpecSchema = z.discriminatedUnion('kind', [

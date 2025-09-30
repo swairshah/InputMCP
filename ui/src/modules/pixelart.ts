@@ -68,7 +68,20 @@ export function mountPixelArtModule(spec: PixelArtInputSpec, ctx: RendererContex
   const drawingContext: CanvasRenderingContext2D = context;
   drawingContext.imageSmoothingEnabled = false;
 
-  clearGrid(drawingContext, canvas, spec.gridWidth, spec.gridHeight, spec.backgroundColor);
+  // Load initial image if provided
+  if (spec.initialImage) {
+    const img = new Image();
+    img.onload = () => {
+      drawingContext.drawImage(img, 0, 0, spec.gridWidth, spec.gridHeight);
+    };
+    img.onerror = () => {
+      ctx.setStatus('Failed to load initial image');
+      clearGrid(drawingContext, canvas, spec.gridWidth, spec.gridHeight, spec.backgroundColor);
+    };
+    img.src = spec.initialImage;
+  } else {
+    clearGrid(drawingContext, canvas, spec.gridWidth, spec.gridHeight, spec.backgroundColor);
+  }
 
   let currentColor = spec.palette[0] || '#000000';
   let isDrawing = false;

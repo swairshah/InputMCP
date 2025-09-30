@@ -1,4 +1,4 @@
-import { launchInputPrompt, normalizeSpec, InputSpec } from "../src/create.js";
+import { launchInputPrompt, normalizeSpec, InputSpec } from "../src/create";
 
 type InputKind = "text" | "image" | "pixelart";
 

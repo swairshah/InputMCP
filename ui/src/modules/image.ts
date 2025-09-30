@@ -71,7 +71,20 @@ export function mountImageModule(spec: ImageInputSpec, ctx: RendererContext): vo
 
   const drawingContext: CanvasRenderingContext2D = context;
 
-  resetCanvas(drawingContext, canvas, spec.backgroundColor);
+  // Load initial image if provided
+  if (spec.initialImage) {
+    const img = new Image();
+    img.onload = () => {
+      drawingContext.drawImage(img, 0, 0, spec.width, spec.height);
+    };
+    img.onerror = () => {
+      ctx.setStatus('Failed to load initial image');
+      resetCanvas(drawingContext, canvas, spec.backgroundColor);
+    };
+    img.src = spec.initialImage;
+  } else {
+    resetCanvas(drawingContext, canvas, spec.backgroundColor);
+  }
 
   let drawing = false;
   let prevX = 0;
