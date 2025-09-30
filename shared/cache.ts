@@ -62,7 +62,7 @@ export async function saveImageToCache(dataUrl: string): Promise<string> {
   // Write file
   await fs.writeFile(filepath, buffer);
 
-  console.log(`Image saved to cache: ${filepath}`);
+  //console.error(`Image saved to cache: ${filepath}`);
   return filepath;
 }
 

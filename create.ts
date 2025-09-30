@@ -2,11 +2,15 @@ import { spawn } from "node:child_process";
 import { access } from "node:fs/promises";
 import { constants as FsConstants } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const electronEntrypoint = resolve(__dirname, "ui", "dist", "ui", "window.js");
+const projectRoot = basename(__dirname) === "dist" ? resolve(__dirname, "..") : __dirname;
+const uiDistDir = resolve(projectRoot, "ui", "dist");
+const electronEntrypoint = resolve(uiDistDir, "ui", "window.js");
+const rendererBundlePath = resolve(uiDistDir, "renderer.bundle.js");
+const indexHtmlPath = resolve(uiDistDir, "index.html");
 
 import { 
   InputSpec, 
@@ -30,8 +34,6 @@ export function normalizeSpec(kind: InputKind | undefined): InputSpec {
   return TextInputSpecSchema.parse({ kind: "text" });
 }
 
-// Types now imported from shared/types.ts
-
 async function fileExists(path: string): Promise<boolean> {
   try {
     await access(path, FsConstants.F_OK);
@@ -42,22 +44,17 @@ async function fileExists(path: string): Promise<boolean> {
 }
 
 async function ensureUiBuilt(): Promise<void> {
-  const distDir = resolve(__dirname, "ui", "dist");
-  const distIndex = resolve(distDir, "index.html");
-  const distWindow = resolve(distDir, "ui", "window.js");
-  const distRenderer = resolve(distDir, "ui", "renderer.js");
-
   const hasAll = await Promise.all([
-    fileExists(distIndex),
-    fileExists(distWindow),
-    fileExists(distRenderer)
+    fileExists(indexHtmlPath),
+    fileExists(electronEntrypoint),
+    fileExists(rendererBundlePath)
   ]);
 
   if (hasAll.every(Boolean)) return;
 
   const tryRun = (cmd: string, args: string[]) =>
     new Promise<void>((resolveRun, rejectRun) => {
-      const p = spawn(cmd, args, { stdio: "inherit" });
+      const p = spawn(cmd, args, { stdio: "inherit", cwd: projectRoot });
       p.on("error", rejectRun);
       p.on("exit", (code) => {
         if (code === 0) resolveRun();
