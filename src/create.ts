@@ -17,6 +17,7 @@ import {
   InputKind,
   TextInputSpecSchema,
   ImageInputSpecSchema,
+  PixelArtInputSpecSchema,
   SubmissionResult,
   InputCancelledError,
   InputFailedError
@@ -26,12 +27,14 @@ export function normalizeSpec(kind: InputKind | undefined): InputSpec {
   const resolved = kind ?? "text";
 
   if (resolved === "image") {
-    // Use zod schema to create spec with defaults
     return ImageInputSpecSchema.parse({ kind: "image" });
   }
 
-  // Use zod schema to create spec with defaults  
-  return TextInputSpecSchema.parse({ kind: "text" });
+  if (resolved === "pixelart") {
+    return PixelArtInputSpecSchema.parse({ kind: "pixelart" });
+  }
+
+  return TextInputSpecSchema.parse({ kind: "image" });
 }
 
 async function fileExists(path: string): Promise<boolean> {

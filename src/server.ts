@@ -32,8 +32,8 @@ function extractImageContent(dataUrl: string, fallbackMime: string): { mimeType:
 
 server.registerTool("collect_input", {
     title: "Collect Input", 
-    description: "get image or text input from user. This is used to get contextual input from the user of different kinds. ",
-    inputSchema: { kind: z.enum(["text", "image"]).optional() },
+    description: "get image, text, or pixel art input from user. This is used to get contextual input from the user of different kinds. ",
+    inputSchema: { kind: z.enum(["text", "image", "pixelart"]).optional() },
 }, async ({ kind }) => {
     const spec = normalizeSpec(kind);
 
@@ -44,7 +44,7 @@ server.registerTool("collect_input", {
             return { content: [{ type: "text", text: result.value }] };
         }
 
-        if (result.kind === "image") {
+        if (result.kind === "image" || result.kind === "pixelart") {
             // Save image to cache
             const cachedPath = await saveImageToCache(result.dataUrl);
 

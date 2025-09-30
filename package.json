@@ -27,7 +27,8 @@
     "typecheck": "tsc --noEmit",
     "test:ui": "npm run build && node dist/src/create.js",
     "test:image": "bunx tsx scripts/test-input.ts image",
-    "test:text": "bunx tsx scripts/test-input.ts text"
+    "test:text": "bunx tsx scripts/test-input.ts text",
+    "test:pixelart": "bunx tsx scripts/test-input.ts pixelart"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.2",

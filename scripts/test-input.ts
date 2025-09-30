@@ -1,6 +1,6 @@
-import { launchInputPrompt, normalizeSpec, InputSpec } from "../create.ts";
+import { launchInputPrompt, normalizeSpec, InputSpec } from "../src/create.js";
 
-type InputKind = "text" | "image";
+type InputKind = "text" | "image" | "pixelart";
 
 type CliConfig = {
   kind: InputKind;
@@ -8,11 +8,11 @@ type CliConfig = {
 
 function parseArgs(): CliConfig {
   const arg = (process.argv[2] ?? "text").toLowerCase();
-  if (arg === "text" || arg === "image") {
+  if (arg === "text" || arg === "image" || arg === "pixelart") {
     return { kind: arg };
   }
 
-  console.error(`Unsupported kind: ${process.argv[2]}. Use one of text | json | image.`);
+  console.error(`Unsupported kind: ${process.argv[2]}. Use one of text | image | pixelart.`);
   process.exit(1);
 }
 
