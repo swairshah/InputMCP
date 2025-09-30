@@ -6,9 +6,9 @@ import { basename, dirname, resolve } from "node:path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const projectRoot = basename(__dirname) === "dist" ? resolve(__dirname, "..") : __dirname;
-const uiDistDir = resolve(projectRoot, "ui", "dist");
-const electronEntrypoint = resolve(uiDistDir, "ui", "window.js");
+const projectRoot = resolve(__dirname, "../..");
+const uiDistDir = resolve(projectRoot, "dist", "ui");
+const electronEntrypoint = resolve(uiDistDir, "window.js");
 const rendererBundlePath = resolve(uiDistDir, "renderer.bundle.js");
 const indexHtmlPath = resolve(uiDistDir, "index.html");
 

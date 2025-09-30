@@ -11,20 +11,17 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": false,
-    "outDir": "./ui/dist",
-    "rootDir": ".",
+    "noEmit": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true
   },
   "include": [
-    "ui/**/*",
-    "shared/**/*",
-    "*.ts"
+    "src/**/*",
+    "ui/**/*"
   ],
   "exclude": [
     "node_modules",
-    "ui/dist"
+    "dist"
   ]
 }

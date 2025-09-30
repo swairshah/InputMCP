@@ -1,4 +1,4 @@
-import { launchInputPrompt, normalizeSpec } from "../create.ts";
+import { launchInputPrompt, normalizeSpec, InputSpec } from "../create.ts";
 
 type InputKind = "text" | "image";
 

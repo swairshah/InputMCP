@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { z } from "zod";
 import { launchInputPrompt, normalizeSpec } from "./create.js";
 import { InputKind, InputCancelledError, InputFailedError } from "./shared/types.js";

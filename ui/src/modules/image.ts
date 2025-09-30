@@ -1,4 +1,4 @@
-import type { RendererContext, ImageInputSpec, SubmissionResult } from '../../shared/types';
+import type { RendererContext, ImageInputSpec, SubmissionResult } from '../../../src/shared/types';
 
 function resetCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, backgroundColor?: string): void {
   ctx.save();

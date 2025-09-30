@@ -1,4 +1,4 @@
-import type { RendererContext, TextInputSpec, SubmissionResult } from '../../shared/types';
+import type { RendererContext, TextInputSpec, SubmissionResult } from '../../../src/shared/types';
 
 export function mountTextModule(spec: TextInputSpec, ctx: RendererContext): void {
   ctx.contentEl.innerHTML = '';

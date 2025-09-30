@@ -1,8 +1,8 @@
 // Using require keeps compatibility with Electron's renderer when nodeIntegration is enabled.
 const { ipcRenderer } = require('electron') as typeof import('electron');
 
-import type { InputSpec, TextInputSpec, ImageInputSpec, SubmissionResult, RendererContext } from '../shared/types';
-import { InputSpecSchema } from '../shared/types';
+import type { InputSpec, TextInputSpec, ImageInputSpec, SubmissionResult, RendererContext } from '../../src/shared/types';
+import { InputSpecSchema } from '../../src/shared/types';
 import { mountTextModule } from './modules/text.js';
 import { mountImageModule } from './modules/image.js';
 
