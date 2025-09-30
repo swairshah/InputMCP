@@ -6,7 +6,9 @@ import { basename, dirname, resolve } from "node:path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const projectRoot = resolve(__dirname, "..");
+// When running from dist/src/create.js, go up to project root; from src/create.ts, also go up one
+const isInDist = __dirname.includes('/dist/src');
+const projectRoot = isInDist ? resolve(__dirname, "../..") : resolve(__dirname, "..");
 const uiDistDir = resolve(projectRoot, "dist", "ui");
 const electronEntrypoint = resolve(uiDistDir, "window.js");
 const rendererBundlePath = resolve(uiDistDir, "renderer.bundle.js");
@@ -87,7 +89,8 @@ async function ensureUiBuilt(): Promise<void> {
 
   const tryRun = (cmd: string, args: string[]) =>
     new Promise<void>((resolveRun, rejectRun) => {
-      const p = spawn(cmd, args, { stdio: "inherit", cwd: projectRoot });
+      // Redirect stdio to stderr to avoid breaking MCP's JSON-RPC on stdout
+      const p = spawn(cmd, args, { stdio: ["ignore", "ignore", "inherit"], cwd: projectRoot });
       p.on("error", rejectRun);
       p.on("exit", (code) => {
         if (code === 0) resolveRun();

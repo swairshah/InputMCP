@@ -8,6 +8,8 @@ The server exposes a single `collect_input` tool that can collect:
 
 When called, it launches an Electron window where the user can provide their input, then returns the result (as a file path for images) back to the MCP client.
 
+![Pixel Art Example](pixelart-example.png)
+
 ## Quick Start
 
 ```bash
@@ -19,7 +21,7 @@ npx @modelcontextprotocol/inspector node dist/src/server.js
 **Note:** This package is also published on npm as `@swairshah/input-mcp` and can be used directly with `npx @swairshah/input-mcp`.
 
 This opens a web interface where you can test the tool. Try calling `collect_input` with different parameters:
-- `{"kind": "text"}` - opens a text input window (this is just for testing stuff not really useful)
+- `{"kind": "text"}` - opens a text input window
 - `{"kind": "pixelart", "gridWidth": 16, "gridHeight": 16}` - opens a pixel art editor
 - `{"kind": "image", "initialImage": "/path/to/image.png"}` - opens an image editor with a starting image
 
